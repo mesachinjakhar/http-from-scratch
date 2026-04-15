@@ -1,70 +1,52 @@
+use std::io::Read;
 use std::net::TcpListener;
-use std::io::{Read, Write};
+use std::os::fd::AsRawFd; 
 
 fn main() {
-   let listener = TcpListener::bind("127.0.0.1:8080")
-   .expect("Failed to bind the address");
+    // Step 1: Create a tcp listner
+   let listener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind address"); 
 
-   println!("Server is listening on http://127.0.0.1:8080");
-   println!("Waiting for connections...\n");
-
-   // Step 2: Accept loop - handle one connection at a time
-   for (connection_num, stream) in listener.incoming().enumerate() {
+   // step 2, get access to stream on the listener 
+   for (c, stream) in listener.incoming().enumerate() {
     match stream {
         Ok(mut stream) => {
-            println!("═══════════════════════════════════════");
-            println!("Connection {} accepted", connection_num + 1);
-            println!("From: {}", stream.peer_addr().unwrap());
-            println!("═══════════════════════════════════════");
-
-            // Step 3: Handle Connection
-            handle_connection(&mut stream, connection_num + 1);
-
+            println!("stream is: {:?}", stream); // you see TcpStream { addr: 127.0.0.1:8080, peer: 127.0.0.1:50136, fd: 4 }, what is fd here? 
+            println!("fd: {}", stream.as_raw_fd()); // this one is interesting, in mac/linux/unix , everything is treated as file, including sockets,
+            // tcp connection = file, os assign a number to it = file descripter, its just a reference to the acutual socket. internally os apis are like close(fd), open(fd), read(fd). you get it. 
+            // pass stream struct to handler 
+            stream_handler(&mut stream); 
         }
-        Err(e) => {
-            println!("Error accepting connection: {}", e);
+        Err(err) => {
+            println!("error {}", err);
         }
     }
    }
 
 }
 
-fn  handle_connection(stream: &mut std::net::TcpStream, conn_num: usize) {
-    let mut buffer = [0u8; 1024];
-    let mut total_bytes = 0;
-    let mut read_count = 0;
+fn stream_handler(stream: &mut std::net::TcpStream) {
+    let mut buffer = [0u8; 1024]; // why exactly 1024? tcp has no limit of stream, it can send any amount of bytes in one go, eg 3000 bytes, just taking 1024 bytes in one go, 
+    let mut total_bytes = 0; // total bytes read in this stream
+    let mut count = 0 ; // stream count 
 
-    println!("Reading from stream");
-
-    // Step 4: Read stream untill connection closed
-    loop { // read method overwrite the old values 
-        match stream.read(&mut buffer) {
-            // read method return the result containing the total number of bytes written to buffer in this iteration. eg: 5
-            Ok(0) => {
-                println!("Connection closed ");
+    // create a infinite loop on stream, so it stops only when stream has nothing 
+    loop {
+        match stream.read(&mut buffer) { // Pull some bytes from this source into the specified buffer, returning how many bytes were read. this overwrite the buffer
+            Ok(0) =>  { // 0 means, connection is closed by the client, it does not mean that connection is still alive but client is having network issue so he is not sending new data, 
+                // that wrong, 0 means connection close, if client having network issue then .read function wait untill gets the data. 
+                println!("connection closed"); // since stream has nothing 
                 break;
-            }
-            Ok(n) => {
-                read_count +=1;
+            },
+            Ok(n ) => {
+                count += 1; 
                 total_bytes += n;
-                println!("📦 Read #{}: {} bytes", read_count, n);
+                // read the buffer now
 
-                // we extract info into text from the current total bytes recieved
-                if let Ok(text) = std::str::from_utf8(&mut buffer[..n]) {
-                    println!("As text: {:?}", text);
-                } else {
-                    println!("(not valid UTF-8)");
-                }
-
-            }
-            Err(e) => {
-                println!("Error reading stream {}", e);
+            },
+            Err(err) => {
+                println!("error reading stream");
                 break;
             }
         }
     }
-
-    println!("📊 Statistics:");
-    println!("   Total reads: {}", read_count);
-    println!("   Total bytes: {}", total_bytes);
 }
