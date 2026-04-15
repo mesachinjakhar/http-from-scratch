@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::net::TcpListener;
 use std::os::fd::AsRawFd; 
-
+use std::io::Write;
 fn main() {
     // Step 1: Create a tcp listner
    let listener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind address"); 
@@ -29,7 +29,7 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
     let mut total_bytes = 0; // total bytes read in this stream
     let mut count = 0 ; // stream count 
 
-    // create a infinite loop on stream, so it stops only when stream has nothing 
+    // create a  loop on stream
     loop {
         match stream.read(&mut buffer) { // Pull some bytes from this source into the specified buffer, returning how many bytes were read. this overwrite the buffer
             Ok(0) =>  { // 0 means, connection is closed by the client, it does not mean that connection is still alive but client is having network issue so he is not sending new data, 
@@ -38,9 +38,23 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
                 break;
             },
             Ok(n ) => {
+                println!("buffer values: {:?}", buffer);
                 count += 1; 
                 total_bytes += n;
                 // read the buffer now
+
+                if let Ok(text) = std::str::from_utf8(&mut buffer[..n]) {
+                    println!("text {}", text); 
+                    if text.contains("\r\n\r\n") { // this means HTTP headers finished. 
+                        let response = "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello";
+                        stream.write_all(response.as_bytes()).unwrap();
+                        stream.flush().unwrap();
+                        break; // stop reading this connection
+                    }
+
+                } else {
+                    println!("not a valid utf 8");
+                }
 
             },
             Err(err) => {
@@ -49,4 +63,6 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
             }
         }
     }
+    println!("total bytes :{}", total_bytes); 
+    println!("total count: {}", count);
 }
