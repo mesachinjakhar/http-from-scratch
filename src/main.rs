@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::net::TcpListener;
 use std::os::fd::AsRawFd; 
-mod parse_request;
+mod request;
 fn main() {
     // Step 1: Create a tcp listner
    let listener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind address"); 
@@ -87,6 +87,6 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
         }
     }
 
-    parse_request::parse(header_part.to_string(), body);
+    request::parse(header_part.to_string(), body);
 }
 
