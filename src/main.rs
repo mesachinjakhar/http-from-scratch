@@ -1,14 +1,13 @@
 use std::io::Read;
 use std::net::TcpListener;
 use std::os::fd::AsRawFd; 
-use std::io::Write;
-mod header;
+mod parse_request;
 fn main() {
     // Step 1: Create a tcp listner
    let listener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind address"); 
 
    // step 2, get access to stream on the listener 
-   for (connection, stream) in listener.incoming().enumerate() {
+   for (_connection, stream) in listener.incoming().enumerate() {
     match stream {
         Ok(mut stream) => {
             println!("stream is: {:?}", stream); // you see TcpStream { addr: 127.0.0.1:8080, peer: 127.0.0.1:50136, fd: 4 }, what is fd here? 
@@ -27,8 +26,8 @@ fn main() {
 
 fn stream_handler(stream: &mut std::net::TcpStream) {
     let mut buffer = [0u8; 1024]; // why exactly 1024? tcp has no limit of stream, it can send any amount of bytes in one go, eg 3000 bytes, just taking 1024 bytes in one go, 
-    let mut total_bytes = 0; // total bytes read in this stream
-    let mut count = 0 ; // stream count 
+    let mut _total_bytes = 0; // total bytes read in this stream
+    let mut _count = 0 ; // stream count 
 
     let mut full_request = "".to_string();
     // create a  loop on stream
@@ -40,8 +39,8 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
                 break;
             },
             Ok(n ) => {
-                count += 1; 
-                total_bytes += n;
+                _count += 1; 
+                _total_bytes += n;
                 // read the buffer now
                 if let Ok(text) = std::str::from_utf8(&mut buffer[..n]) {
                 full_request.push_str(text);
@@ -88,7 +87,6 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
         }
     }
 
-    println!("headers: {}", header_part);
-    println!("body: {}", body);
+    parse_request::parse(header_part.to_string(), body);
 }
 
