@@ -9,7 +9,7 @@ pub struct HttpRequest {
     pub body: Option<String>
 }
 
-pub fn parse(header: String, body: String) {
+pub fn parse(header: String, body: String) -> HttpRequest {
     let mut lines = header.lines(); 
 
     let request_line = lines.next().unwrap_or(""); 
@@ -39,8 +39,6 @@ pub fn parse(header: String, body: String) {
         Some(body)
     };
 
-    let http_request = HttpRequest {method, path, version, headers, body};
-
-    println!("{:?}", http_request);
+    HttpRequest {method, path, version, headers, body}
 
 }

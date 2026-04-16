@@ -1,10 +1,15 @@
-use std::io::Read;
+use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::os::fd::AsRawFd; 
 mod request;
+mod router;
 fn main() {
     // Step 1: Create a tcp listner
    let listener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind address"); 
+
+    let mut router = router::Router::new();
+    router.get("/", handle_index);
+    router.post("/login", handle_login);
 
    // step 2, get access to stream on the listener 
    for (_connection, stream) in listener.incoming().enumerate() {
@@ -14,7 +19,7 @@ fn main() {
             println!("fd: {}", stream.as_raw_fd()); // this one is interesting, in mac/linux/unix , everything is treated as file, including sockets,
             // tcp connection = file, os assign a number to it = file descripter, its just a reference to the acutual socket. internally os apis are like close(fd), open(fd), read(fd). you get it. 
             // pass stream struct to handler 
-            stream_handler(&mut stream); 
+            stream_handler(&mut stream, &mut router);
         }
         Err(err) => {
             println!("error {}", err);
@@ -24,7 +29,7 @@ fn main() {
 
 }
 
-fn stream_handler(stream: &mut std::net::TcpStream) {
+fn stream_handler(stream: &mut std::net::TcpStream, router: &mut router::Router) {
     let mut buffer = [0u8; 1024]; // why exactly 1024? tcp has no limit of stream, it can send any amount of bytes in one go, eg 3000 bytes, just taking 1024 bytes in one go, 
     let mut _total_bytes = 0; // total bytes read in this stream
     let mut _count = 0 ; // stream count 
@@ -87,6 +92,17 @@ fn stream_handler(stream: &mut std::net::TcpStream) {
         }
     }
 
-    request::parse(header_part.to_string(), body);
+    let http_request = request::parse(header_part.to_string(), body);
+    let response = router.dispatch(http_request);
+    stream.write_all(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
 }
 
+fn handle_index(req: request::HttpRequest) -> String {
+    "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello".to_string()
+}
+
+fn handle_login(req: request::HttpRequest) -> String {
+    println!("body: {:?}", req.body);
+    "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK".to_string()
+}
