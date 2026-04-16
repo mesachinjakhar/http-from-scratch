@@ -2,20 +2,28 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct HttpRequest {
-    pub method: String, 
-    pub path: String, 
+    pub method: String,
+    pub path: String,
     pub version: String,
     pub headers: HashMap<String, String>,
-    pub body: Option<String>
+    pub body: Option<String>,
+}
+
+pub struct HttpResponse {
+    pub method: String,
+    pub path: String,
+    pub version: String,
+    pub headers: HashMap<String, String>,
+    pub body: Option<String>,
 }
 
 pub fn parse(header: String, body: String) -> HttpRequest {
-    let mut lines = header.lines(); 
+    let mut lines = header.lines();
 
-    let request_line = lines.next().unwrap_or(""); 
-    let mut parts = request_line.split_whitespace(); 
+    let request_line = lines.next().unwrap_or("");
+    let mut parts = request_line.split_whitespace();
 
-    let method = parts.next().unwrap_or("").to_string(); 
+    let method = parts.next().unwrap_or("").to_string();
     let path = parts.next().unwrap_or("").to_string();
     let version = parts.next().unwrap_or("").to_string();
 
@@ -29,16 +37,17 @@ pub fn parse(header: String, body: String) -> HttpRequest {
         }
 
         if let Some((key, value)) = line.split_once(":") {
-            headers.insert(key.trim().to_lowercase(),value.to_string());
+            headers.insert(key.trim().to_lowercase(), value.to_string());
         }
     }
 
-    let body = if body.is_empty() {
-        None
-    } else {
-        Some(body)
-    };
+    let body = if body.is_empty() { None } else { Some(body) };
 
-    HttpRequest {method, path, version, headers, body}
-
+    HttpRequest {
+        method,
+        path,
+        version,
+        headers,
+        body,
+    }
 }
