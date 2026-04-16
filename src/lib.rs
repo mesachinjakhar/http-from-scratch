@@ -89,12 +89,3 @@ fn stream_handler(mut stream: std::net::TcpStream, router: &router::Router) {
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
 }
-
-fn handle_index(req: request::HttpRequest) -> String {
-    "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello".to_string()
-}
-
-fn handle_login(req: request::HttpRequest) -> String {
-    println!("body: {:?}", req.body);
-    "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK".to_string()
-}
