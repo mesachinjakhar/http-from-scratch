@@ -1,8 +1,9 @@
 use crate::request::HttpRequest;
 use std::collections::HashMap;
+use crate::response::HttpResponse;
 
 // any function that takes HttpRequest and returns a String response
-type Handler = fn(HttpRequest) -> String;
+type Handler = fn(HttpRequest) -> HttpResponse;
 
 pub struct Router {
     routes: HashMap<(String, String), Handler>,
@@ -23,11 +24,11 @@ impl Router {
         self.routes
             .insert(("GET".to_string(), path.to_string()), hander);
     }
-    pub fn dispatch(&self, request: HttpRequest) -> String {
+    pub fn dispatch(&self, request: HttpRequest) -> HttpResponse {
         let key = (request.method.clone(), request.path.clone());
         match self.routes.get(&key) {
             Some(Handler) => Handler(request),
-            None => "HTTP/1.1 404 Not Found\r\nContent-Length: 9\r\n\r\nNot Found".to_string(),
+            None => HttpResponse::not_found(),
         }
     }
 }

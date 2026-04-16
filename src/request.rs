@@ -9,14 +9,6 @@ pub struct HttpRequest {
     pub body: Option<String>,
 }
 
-pub struct HttpResponse {
-    pub method: String,
-    pub path: String,
-    pub version: String,
-    pub headers: HashMap<String, String>,
-    pub body: Option<String>,
-}
-
 pub fn parse(header: String, body: String) -> HttpRequest {
     let mut lines = header.lines();
 

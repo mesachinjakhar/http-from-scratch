@@ -3,6 +3,7 @@ use std::net::TcpListener;
 use std::sync::Arc;
 pub mod request;
 pub mod router;
+pub mod response;
 
 pub fn run(addr: &str, router: router::Router) {
     // Step 1: Create a tcp listner
@@ -21,6 +22,7 @@ pub fn run(addr: &str, router: router::Router) {
 }
 
 fn stream_handler(mut stream: std::net::TcpStream, router: &router::Router) {
+    stream.set_read_timeout(Some(std::time::Duration::from_secs(5))).unwrap();
     let mut buffer = [0u8; 1024]; // why exactly 1024? tcp has no limit of stream, it can send any amount of bytes in one go, eg 3000 bytes, just taking 1024 bytes in one go, 
     let mut _total_bytes = 0; // total bytes read in this stream
     let mut _count = 0; // stream count 
@@ -87,6 +89,6 @@ fn stream_handler(mut stream: std::net::TcpStream, router: &router::Router) {
 
     let http_request = request::parse(header_part.to_string(), body);
     let response = router.dispatch(http_request);
-    stream.write_all(response.as_bytes()).unwrap();
+    stream.write_all(response.to_bytes().as_bytes()).unwrap();
     stream.flush().unwrap();
 }
