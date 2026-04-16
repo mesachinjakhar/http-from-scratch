@@ -18,7 +18,7 @@ impl Router {
     pub fn post(&mut self, path: &str, hander: Handler) {
         self.routes.insert(("GET".to_string(), path.to_string()), hander);
     }
-    pub fn dispatch(&mut self, request: HttpRequest) -> String {
+    pub fn dispatch(&self, request: HttpRequest) -> String {
         let key = (request.method.clone(), request.path.clone());
         match self.routes.get(&key) {
             Some(Handler) => Handler(request),
