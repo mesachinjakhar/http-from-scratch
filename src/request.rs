@@ -5,6 +5,7 @@ pub struct HttpRequest {
     pub method: String,
     pub path: String,
     pub query: HashMap<String, String>,
+    pub params: HashMap<String, String>,
     pub version: String,
     pub headers: HashMap<String, String>,
     pub body: Option<String>,
@@ -22,7 +23,6 @@ pub fn parse(header: String, body: String) -> HttpRequest {
 
     let (path, query) = parse_path(&raw_path);
 
-
     // parse remaining lines key : value; eg: Host: localhost:8080 , User-Agent: insomnia/12.4.0
 
     let mut headers = HashMap::new();
@@ -38,11 +38,13 @@ pub fn parse(header: String, body: String) -> HttpRequest {
     }
 
     let body = if body.is_empty() { None } else { Some(body) };
+    let params = HashMap::new(); // ← empty here, router fills it later
 
     HttpRequest {
         method,
         path,
         query,
+        params,
         version,
         headers,
         body,
