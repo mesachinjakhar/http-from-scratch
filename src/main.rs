@@ -1,4 +1,5 @@
 use http_from_scratch::{request::HttpRequest, response::HttpResponse, router::Router};
+use serde_json::json;
 
 fn main() {
     let mut router = Router::new();
@@ -12,19 +13,23 @@ fn main() {
 fn handle_index(req: HttpRequest) -> HttpResponse {
     HttpResponse::ok("Hello")
 }
-
 fn handle_login(req: HttpRequest) -> HttpResponse {
-    HttpResponse::ok("Logged in")
+    HttpResponse::json(json!({
+        "status": "ok",
+        "message": "logged in"
+    }))
 }
-
 
 fn handle_user(req: HttpRequest) -> HttpResponse {
     let id = req.params.get("id").unwrap();
-    HttpResponse::ok(&format!("user id is {}", id))
+    HttpResponse::json(json!({
+        "id": id,
+        "name": "John"
+    }))
 }
 
 fn handle_post(req: HttpRequest) -> HttpResponse {
-    let id      = req.params.get("id").unwrap();
+    let id = req.params.get("id").unwrap();
     let post_id = req.params.get("post_id").unwrap();
     HttpResponse::ok(&format!("user {} post {}", id, post_id))
 }
