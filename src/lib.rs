@@ -4,6 +4,7 @@ use std::sync::Arc;
 pub mod request;
 pub mod router;
 pub mod response;
+pub mod threadpool;
 
 pub fn run(addr: &str, router: router::Router) {
     // Step 1: Create a tcp listner
@@ -11,11 +12,13 @@ pub fn run(addr: &str, router: router::Router) {
 
     let router = Arc::new(router);
 
+    let pool = threadpool::ThreadPool::new(4); // 4 worker threads max
+    
     // step 2, get access to stream on the listener
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         let router = Arc::clone(&router);
-        std::thread::spawn(move || {
+        pool.execute(move || {
             stream_handler(stream, &router);
         });
     }

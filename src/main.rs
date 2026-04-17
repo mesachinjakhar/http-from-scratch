@@ -1,7 +1,4 @@
-use http_from_scratch;
-use http_from_scratch::request::HttpRequest;
-use http_from_scratch::router::Router;
-use http_from_scratch::response::HttpResponse;
+use http_from_scratch::{request::HttpRequest, router::Router, response::HttpResponse};
 
 fn main() {
     let mut router = Router::new();
