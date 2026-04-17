@@ -1,8 +1,11 @@
+use http_from_scratch::middleware::MiddlewareResult;
 use http_from_scratch::{request::HttpRequest, response::HttpResponse, router::Router};
 use serde_json::json;
 
 fn main() {
     let mut router = Router::new();
+    router.use_middleware(logger); // runs first on every request
+    router.use_middleware(auth); // runs second on every request
     router.get("/", handle_index);
     router.post("/login", handle_login);
     router.get("/users/:id", handle_user);
@@ -32,4 +35,19 @@ fn handle_post(req: HttpRequest) -> HttpResponse {
     let id = req.params.get("id").unwrap();
     let post_id = req.params.get("post_id").unwrap();
     HttpResponse::ok(&format!("user {} post {}", id, post_id))
+}
+
+fn logger(req: HttpRequest) -> MiddlewareResult {
+    println!("[{}] {}", req.method, req.path);
+    MiddlewareResult::Next(req)
+}
+
+fn auth(req: HttpRequest) -> MiddlewareResult {
+    match req.headers.get("authorization") {
+        Some(_) => MiddlewareResult::Next(req), // has token, continue
+        None => MiddlewareResult::Respond(
+            // if no token, block
+            HttpResponse::new(401, "Unauthorized"),
+        ),
+    }
 }

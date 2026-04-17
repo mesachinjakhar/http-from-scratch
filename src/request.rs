@@ -38,7 +38,7 @@ pub fn parse(header: String, body: String) -> HttpRequest {
     }
 
     let body = if body.is_empty() { None } else { Some(body) };
-    let params = HashMap::new(); // ← empty here, router fills it later
+    let params = HashMap::new(); // router fills it later
 
     HttpRequest {
         method,
@@ -54,14 +54,14 @@ pub fn parse(header: String, body: String) -> HttpRequest {
 fn parse_path(raw_path: &str) -> (String, HashMap<String, String>) {
     let mut query = HashMap::new();
 
-    // split at '?' → ["/search", "q=rust&page=2"]
+    // split at '?'= ["/search", "q=rust&page=2"]
     match raw_path.split_once('?') {
         None => {
             // no query string at all
             (raw_path.to_string(), query)
         }
         Some((path, query_string)) => {
-            // "q=rust&page=2" → ["q=rust", "page=2"]
+            // "q=rust&page=2" = ["q=rust", "page=2"]
             for pair in query_string.split('&') {
                 if let Some((key, value)) = pair.split_once('=') {
                     query.insert(key.to_string(), value.to_string());

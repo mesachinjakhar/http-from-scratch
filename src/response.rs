@@ -13,6 +13,13 @@ impl HttpResponse {
             content_type: "text/plain".to_string(),
         }
     }
+    pub fn new(status: u16, body: &str) -> Self {
+        HttpResponse {
+            status: status,
+            body: body.to_string(),
+            content_type: "text/plain".to_string(),
+        }
+    }
     pub fn not_found() -> Self {
         HttpResponse {
             status: 404,
@@ -25,6 +32,7 @@ impl HttpResponse {
         match self.status {
             200 => "OK",
             404 => "Not Found",
+            401 => "Unauthorized",
             500 => "Internal Server Error",
             400 => "Bad Request",
             _ => "Unknown",

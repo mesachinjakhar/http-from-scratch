@@ -1,6 +1,7 @@
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::sync::Arc;
+pub mod middleware;
 pub mod request;
 pub mod response;
 pub mod router;
@@ -94,6 +95,8 @@ fn stream_handler(mut stream: std::net::TcpStream, router: &router::Router) {
 
     let http_request = request::parse(header_part.to_string(), body);
     let response = router.dispatch(http_request);
-    stream.write_all(response.as_bytes()).unwrap();
+    stream
+        .write_all(response.to_http_string().as_bytes())
+        .unwrap();
     stream.flush().unwrap();
 }
